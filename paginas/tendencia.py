@@ -12,7 +12,7 @@ from comun import (cargarResultados, encabezado, cifras, caja, estiloGrafico, nu
 exploratorio, modelado = cargarResultados()
 m = modelado
 
-encabezado("Paso 3 · Proyectar", "¿Hacia dónde vamos?", "tasa de pérdida regional 2010–2023 y meta ODS 12.3 a 2030")
+encabezado("", "¿Hacia dónde vamos?", "tasa de pérdida regional 2010–2023 y meta ODS 12.3 a 2030")
 
 # Cifras de la tendencia
 serieSinSoya, rSinSoya = m["serieSinSoya"], m["rSinSoya"]

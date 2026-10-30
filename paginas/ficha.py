@@ -9,7 +9,7 @@ exploratorio, modelado = cargarResultados()
 m = modelado
 metricas = m["metricas"].set_index("Modelo")
 
-encabezado("Respaldo", "Ficha técnica", "métodos y validación del análisis · detalle completo en el informe")
+encabezado("", "Ficha técnica", "métodos y validación del análisis")
 
 izquierda, derecha = st.columns(2)
 

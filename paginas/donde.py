@@ -9,7 +9,7 @@ from comun import (basesFiltradas, sinDatos, textoFiltros, encabezado, cifras, c
 perdidasF, maestraF = basesFiltradas()
 sinDatos(perdidasF)
 
-encabezado("Paso 1 · Ubicar el problema", "¿Dónde se pierde?", textoFiltros())
+encabezado("", "¿Dónde se pierde?", textoFiltros())
 
 # Mapa de calor país × producto (mediana de la tasa de pérdida)
 mapaCalor = perdidasF.pivot_table(index="Pais", columns="Producto", values="TasaPerdida", aggfunc="median")

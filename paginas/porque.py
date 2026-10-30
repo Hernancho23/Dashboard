@@ -13,7 +13,7 @@ exploratorio, modelado = cargarResultados()
 m = modelado
 baseModelo = pr.traducir(m["baseModelo"])
 
-encabezado("Paso 2 · Entender las causas", "¿Por qué se pierde?",
+encabezado("", "¿Por qué se pierde?",
            f"{len(baseModelo)} combinaciones país-producto · mediana 2010–2023")
 
 # Hallazgos principales del modelado, en cifras

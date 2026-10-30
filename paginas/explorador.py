@@ -10,7 +10,7 @@ from comun import (basesFiltradas, sinDatos, textoFiltros, encabezado, caja, est
 perdidasF, maestraF = basesFiltradas()
 sinDatos(perdidasF)
 
-encabezado("Consulta", "Explorador de datos", f"usa los filtros de la izquierda · {textoFiltros()}")
+encabezado("", "Explorador de datos", textoFiltros())
 
 # Evolución de la tasa de pérdida con los filtros
 with caja("Evolución de la tasa de pérdida", "pérdida / oferta de la selección, por año (%)"):
