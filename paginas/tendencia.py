@@ -42,7 +42,7 @@ with caja("Al ritmo actual, la región no llega a la meta de 2030",
     fig.add_annotation(x=2030, y=m["meta2030"], text=f"<b>{numero(m['meta2030'])}%</b>", showarrow=False,
                        yshift=-14, font=dict(color=verde, size=14))
     fig.update_layout(yaxis=dict(range=[0, 9], title="Tasa de pérdida (%)"), xaxis=dict(dtick=2))
-    st.plotly_chart(estiloGrafico(fig, 430), width="stretch")
+    st.plotly_chart(estiloGrafico(fig, 430), width="stretch", theme=None)
 
 # Cambio anual por producto
 with caja("Qué productos mejoran y cuáles empeoran", "cambio de la tasa regional por año (puntos porcentuales) · solo tendencias significativas"):
@@ -55,4 +55,4 @@ with caja("Qué productos mejoran y cuáles empeoran", "cambio de la tasa region
     fig.update_traces(marker_color=colores, marker_cornerradius=4, texttemplate="%{text:+.3f}",
                       textposition="outside", hovertemplate="%{y}: %{x:+.3f} p.p./año<extra></extra>")
     fig.update_xaxes(range=[-0.22, 0.1], zeroline=True, zerolinecolor="#999", showticklabels=False)
-    st.plotly_chart(estiloGrafico(fig, 360), width="stretch")
+    st.plotly_chart(estiloGrafico(fig, 360), width="stretch", theme=None)

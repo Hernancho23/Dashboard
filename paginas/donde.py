@@ -27,7 +27,7 @@ with caja("Mapa de puntos críticos", "tasa de pérdida mediana por país y prod
     fig.update_traces(hovertemplate="%{y} · %{x}<br>Tasa mediana: %{z:.1f}%<extra></extra>", xgap=2, ygap=2)
     fig.update_xaxes(side="top")
     fig.update_layout(coloraxis_colorbar=dict(thickness=12))
-    st.plotly_chart(estiloGrafico(fig, 70 + 34 * len(mapaCalor)), width="stretch")
+    st.plotly_chart(estiloGrafico(fig, 70 + 34 * len(mapaCalor)), width="stretch", theme=None)
 
 izquierda, derecha = st.columns(2)
 
@@ -45,7 +45,7 @@ with izquierda:
         fig.update_yaxes(categoryorder="array", categoryarray=ranking["Combinación"].iloc[::-1].tolist())
         fig.add_vline(x=10, line_dash="dot", line_color="#999")
         fig.update_xaxes(range=[0, ranking["TasaPerdida"].max() * 1.18], showticklabels=False)
-        st.plotly_chart(estiloGrafico(fig, 460), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 460), width="stretch", theme=None)
 
 # Tasa vs impacto económico
 with derecha:
@@ -60,4 +60,4 @@ with derecha:
                          labels={"Oferta": "Oferta disponible (t, escala log)", "TasaPerdida": "Tasa de pérdida (%)",
                                  "PerdidaUSD": "Valor perdido (USD)"})
         fig.update_traces(marker=dict(line=dict(width=.5, color="white"), sizemin=3))
-        st.plotly_chart(estiloGrafico(fig, 460), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 460), width="stretch", theme=None)

@@ -20,7 +20,7 @@ with caja("Evolución de la tasa de pérdida", "pérdida / oferta de la selecci�
                   labels={"Tasa": "Tasa de pérdida (%)", "Año": ""})
     fig.update_traces(hovertemplate="%{x}: %{y:.2f}%<extra></extra>", line_width=2.5)
     fig.update_yaxes(rangemode="tozero")
-    st.plotly_chart(estiloGrafico(fig, 340), width="stretch")
+    st.plotly_chart(estiloGrafico(fig, 340), width="stretch", theme=None)
 
 # Indicadores por país de la selección
 with caja("Indicadores por país", "acumulado de la selección"):
@@ -35,7 +35,7 @@ with caja("Indicadores por país", "acumulado de la selección"):
             lambda v: "muy alto" if pd.notna(v) and v > 1000 else ("—" if pd.isna(v) else numero(v))),
         "Dependencia importadora (%)": kpis["DependenciaImportadora"].map(numero),
         "_orden": kpis["TasaPerdida"]}).sort_values("_orden", ascending=False).drop(columns="_orden")
-    st.dataframe(tabla, width="stretch", hide_index=True)
+    st.table(tabla.set_index("País").rename_axis(None))
 
 # Datos para descargar
 with caja("Datos de la selección", "país · producto · año"):
@@ -44,6 +44,9 @@ with caja("Datos de la selección", "país · producto · año"):
                 "DependenciaImportadora": "Dependencia importadora (%)", "IndiceRendimiento": "Índice de rendimiento",
                 "Calidad": "Origen del dato"}
     datos = perdidasF[list(columnas)].rename(columns=columnas).round(2)
-    st.dataframe(datos, width="stretch", hide_index=True, height=320)
+    # Colores fijos de la tabla para que se vea igual con cualquier tema del navegador
+    st.dataframe(datos.style.format(precision=2, decimal=",", thousands=".")
+                 .set_properties(**{"background-color": "white", "color": "#23302A"}),
+                 width="stretch", hide_index=True, height=320)
     st.download_button("Descargar CSV", datos.to_csv(index=False, sep=";", decimal=",").encode("utf-8-sig"),
                        file_name="perdida_alimentos_seleccion.csv", mime="text/csv")

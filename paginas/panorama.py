@@ -47,7 +47,7 @@ with izquierda:
                         landcolor="#ECE8DD", showland=True, bgcolor="white")
         fig.update_traces(marker_line_color="white", marker_line_width=.8)
         fig.update_layout(coloraxis_colorbar=dict(title="%", thickness=12, len=.6), margin=dict(l=0, r=0, t=10, b=0))
-        st.plotly_chart(estiloGrafico(fig, 560), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 560), width="stretch", theme=None)
 with derecha:
     with caja("Valor perdido por país", "miles de millones de USD, a precio al productor"):
         orden = kpis.sort_values("PerdidaMilMill")
@@ -58,4 +58,4 @@ with derecha:
         fig.update_traces(marker_color=colores, marker_cornerradius=4, texttemplate="%{text:.1f}",
                           textposition="outside", hovertemplate="%{y}: %{x:.2f} mil mill. USD<extra></extra>")
         fig.update_xaxes(showticklabels=False, range=[0, orden["PerdidaMilMill"].max() * 1.15])
-        st.plotly_chart(estiloGrafico(fig, 560), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 560), width="stretch", theme=None)

@@ -40,11 +40,27 @@ def estilosPagina():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
     html, body, .stApp, p, h1, h2, h3, h4, label, li, td, th, input {{font-family:'Plus Jakarta Sans', sans-serif;}}
-    .stApp {{background:{crema};}}
+    .stApp {{background:{crema};color:{carbon};}}
+    [data-testid="stMain"] p, [data-testid="stMain"] li, [data-testid="stMain"] h4,
+    [data-testid="stMain"] [data-testid="stCaptionContainer"] {{color:{carbon};}}
+    [data-testid="stTable"] table, [data-testid="stTable"] td, [data-testid="stTable"] th
+        {{color:{carbon} !important;background:white !important;border-color:#ECE8DD !important;}}
+    [data-testid="stTable"] th {{color:{grisCalido} !important;font-weight:600;}}
     [data-testid="stHeader"] {{background:transparent;}}
     [data-testid="stSidebar"] {{background:{bosque};}}
     [data-testid="stSidebar"] * {{color:#E8EFE9;}}
-    [data-testid="stSidebar"] [data-baseweb="select"] *, [data-testid="stSidebar"] input {{color:{carbon};}}
+    [data-testid="stSidebar"] [data-baseweb="select"] > div,
+    [data-testid="stSidebar"] div[role="group"]:not(:has([data-baseweb="slider"])):not([data-testid="stSlider"] *)
+        {{background:white !important;border-color:#d9d6cc !important;}}
+    [data-testid="stSidebar"] [data-baseweb="select"] *, [data-testid="stSidebar"] input
+        {{color:{carbon} !important;-webkit-text-fill-color:{carbon};}}
+    [data-testid="stSidebar"] input::placeholder {{color:{grisCalido} !important;-webkit-text-fill-color:{grisCalido};}}
+    [data-testid="stSidebar"] [data-baseweb="select"] svg {{fill:{carbon};}}
+    [data-baseweb="popover"] ul, [data-baseweb="popover"] li {{background:white !important;color:{carbon} !important;}}
+    [data-testid="stSidebar"] [data-testid="stSlider"] [role="slider"] {{background:{ambar} !important;box-shadow:none;}}
+    [data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] > div > div {{background:{ambar} !important;}}
+    [data-testid="stDownloadButton"] button {{background:white;color:{carbon};border-color:#d9d6cc;}}
+    [data-testid="stExpander"] details {{background:white;}}
     [data-testid="stSidebar"] [data-baseweb="tag"] {{background:{ambar};}}
     [data-testid="stSidebar"] [data-baseweb="tag"] * {{color:{carbon};}}
     [data-testid="stSidebarNav"] a {{border-radius:8px;}}

@@ -45,7 +45,7 @@ with izquierda:
                           hovertemplate="%{y}: %{x:.1f}%<extra></extra>")
         fig.update_yaxes(categoryorder="array", categoryarray=porProducto["Producto"].tolist())
         fig.update_xaxes(range=[0, porProducto["TasaPerdida"].max() * 1.2], showticklabels=False)
-        st.plotly_chart(estiloGrafico(fig, 420), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 420), width="stretch", theme=None)
 
 # Probabilidad de ser crítico según el modelo
 with derecha:
@@ -60,7 +60,7 @@ with derecha:
         fig.update_traces(texttemplate="%{text:.0f}%", textposition="outside", marker_cornerradius=4,
                           hovertemplate="%{x} · %{fullData.name}: %{y:.1f}%<extra></extra>")
         fig.update_yaxes(range=[0, 85], showticklabels=False, showgrid=False)
-        st.plotly_chart(estiloGrafico(fig, 420), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 420), width="stretch", theme=None)
 
 # Segmentos encontrados con K-means
 st.markdown("#### Tres perfiles de país-producto")
@@ -93,7 +93,7 @@ with izquierda:
                                  name="Punto crítico", hoverinfo="skip",
                                  marker=dict(symbol="circle-open", size=16, color=carbon, line=dict(width=1.3))))
         fig.add_hline(y=10, line_dash="dot", line_color="#999")
-        st.plotly_chart(estiloGrafico(fig, 460), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 460), width="stretch", theme=None)
 with derecha:
     with caja("Qué distingue a cada perfil", "1 = el valor más alto entre perfiles"):
         indicadores = {"TasaPerdida": "Tasa de<br>pérdida", "PerdidaMillUSD": "Valor<br>perdido",
@@ -113,4 +113,4 @@ with derecha:
                                                      gridcolor="#efece4"),
                                      angularaxis=dict(tickfont=dict(size=11, color=grisCalido), rotation=90,
                                                       gridcolor="#efece4")))
-        st.plotly_chart(estiloGrafico(fig, 460), width="stretch")
+        st.plotly_chart(estiloGrafico(fig, 460), width="stretch", theme=None)
