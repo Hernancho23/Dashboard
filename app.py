@@ -6,35 +6,22 @@ import streamlit as st
 from comun import cargarResultados, estilosPagina, filtrosLaterales
 
 # Configuración general de la página
-st.set_page_config(page_title="Pérdida de alimentos AL", page_icon="🌽", layout="wide")
+st.set_page_config(page_title="Pérdida de alimentos · América Latina", page_icon="🌽", layout="wide")
 estilosPagina()
 
-# Menú de páginas (como el ejemplo del profe: una sección por tema)
-paginas = st.navigation({
-    "Proyecto": [
-        st.Page("paginas/resumen.py", title="Resumen", icon="📌", default=True),
-    ],
-    "Análisis exploratorio": [
-        st.Page("paginas/puntos_criticos.py", title="Puntos críticos", icon="🔥"),
-        st.Page("paginas/productos.py", title="Productos y tendencias", icon="🥑"),
-        st.Page("paginas/paises.py", title="Países y KPIs", icon="🌎"),
-    ],
-    "Análisis avanzados": [
-        st.Page("paginas/modelado.py", title="Modelado multivariado", icon="🧮"),
-        st.Page("paginas/burbujas.py", title="Diagrama de burbujas", icon="🫧"),
-    ],
-    "Datos": [
-        st.Page("paginas/descriptiva.py", title="Estadística descriptiva", icon="📋"),
-        st.Page("paginas/base_filtrada.py", title="Base filtrada", icon="🗂️"),
-    ],
-})
+# Menú: la historia en cuatro pasos, el explorador y la ficha técnica
+paginas = st.navigation([
+    st.Page("paginas/panorama.py", title="Panorama", icon="🌎", default=True),
+    st.Page("paginas/donde.py", title="¿Dónde se pierde?", icon="📍"),
+    st.Page("paginas/porque.py", title="¿Por qué se pierde?", icon="🔎"),
+    st.Page("paginas/tendencia.py", title="¿Hacia dónde vamos?", icon="📈"),
+    st.Page("paginas/explorador.py", title="Explorador de datos", icon="🗂️"),
+    st.Page("paginas/ficha.py", title="Ficha técnica", icon="📐"),
+])
 
-# Filtros consultables en la barra lateral (aplican a todas las páginas)
+# Filtros en la barra lateral
 exploratorio, modelado = cargarResultados()
 filtrosLaterales(exploratorio)
-
-st.sidebar.caption("Proyecto 7 · Minería de Datos · ITM\n\n"
-                   "Jimena Cardona, Hernán Céspedes y Valentina Ramírez\n\n"
-                   "Fuente: FAOSTAT (SUA, Producción, Precios al productor y Comercio).")
+st.sidebar.caption("Jimena Cardona · Hernán Céspedes · Valentina Ramírez\n\nMinería de Datos · ITM · Fuente: FAOSTAT")
 
 paginas.run()

@@ -1,24 +1,32 @@
 # ## FUNCIONES Y ESTILO COMUNES DEL DASHBOARD ##
 
 import streamlit as st
-import plotly.graph_objects as go
 
 import procesamiento as pr
 
-# Colores del proyecto (los mismos de las diapositivas)
-verdeOscuro = "#1F4E3D"
-naranja = "#C8501E"
-rojo = "#c0392b"
-amarillo = "#D9A441"
-azul = "#1f78b4"
-gris = "#7f8c8d"
-colorTipo = {"Perecedero": rojo, "Grano": amarillo}
-colorGrupo = {"Pérdida alta": rojo, "Exportadores": azul, "Bajo volumen": amarillo}
+# Identidad visual: agro moderno
+bosque = "#1F4D3A"
+bosqueClaro = "#2F6B52"
+crema = "#F7F5EF"
+carbon = "#23302A"
+grisCalido = "#8A8F87"
+coral = "#E4572E"
+verde = "#1B9E77"
+ambar = "#E0A526"
+colorTipo = {"Perecedero": coral, "Grano": ambar}
+colorGrupo = {"Pérdida alta": coral, "Exportadores": verde, "Bajo volumen": ambar}
+escalaPerdida = [[0, "#FBF3E4"], [0.35, "#F2C38B"], [0.7, coral], [1, "#8E2A1B"]]
 traduccionCalidad = {"Value imputed by a receiving agency": "Imputado", "Estimated value": "Estimado",
                      "Official value": "Oficial", "Value from external organization": "Organización externa"}
+codigosISO = {
+    "Argentina": "ARG", "Bolivia": "BOL", "Brasil": "BRA", "Chile": "CHL", "Colombia": "COL",
+    "Costa Rica": "CRI", "Rep. Dominicana": "DOM", "Ecuador": "ECU", "El Salvador": "SLV",
+    "Honduras": "HND", "México": "MEX", "Nicaragua": "NIC", "Panamá": "PAN", "Paraguay": "PRY",
+    "Perú": "PER", "Uruguay": "URY", "Venezuela": "VEN",
+}
 
 
-@st.cache_resource(show_spinner="Procesando las bases de FAOSTAT…")
+@st.cache_resource(show_spinner="Cargando los datos de FAOSTAT…")
 def cargarResultados():
     # Se calcula una sola vez y se reutiliza en todas las páginas
     exploratorio = pr.procesarExploratorio()
@@ -27,39 +35,60 @@ def cargarResultados():
 
 
 def estilosPagina():
-    # Estilo general: barra lateral oscura y cajas con encabezado (como el ejemplo del profe)
+    # Tipografía, colores y tarjetas
     st.markdown(f"""
     <style>
-    [data-testid="stSidebar"] {{background:{verdeOscuro};}}
-    [data-testid="stSidebar"] * {{color:#F3EEE2;}}
-    [data-testid="stSidebar"] [data-baseweb="select"] *, [data-testid="stSidebar"] input {{color:#262730;}}
-    [data-testid="stSidebar"] [data-baseweb="tag"] {{background:{naranja};}}
-    [data-testid="stSidebar"] [data-baseweb="tag"] * {{color:white;}}
-    [data-testid="stSidebarNav"] a[aria-current="page"] {{background:rgba(255,255,255,.14);}}
-    .encabezadoCaja {{background:{verdeOscuro};color:white;padding:7px 14px;border-radius:6px 6px 0 0;
-                      margin:-1rem -1rem .6rem -1rem;font-weight:600;}}
-    .tarjeta {{border-radius:8px;padding:14px 16px;color:white;position:relative;overflow:hidden;height:104px;
-               margin-bottom:12px;}}
-    .tarjeta .valor {{font-size:1.75rem;font-weight:700;line-height:1.1;}}
-    .tarjeta .etiqueta {{font-size:.92rem;opacity:.95;margin-top:4px;}}
-    .tarjeta .icono {{position:absolute;right:12px;top:10px;font-size:2.6rem;opacity:.28;}}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    html, body, .stApp, p, h1, h2, h3, h4, label, li, td, th, input {{font-family:'Plus Jakarta Sans', sans-serif;}}
+    .stApp {{background:{crema};}}
+    [data-testid="stHeader"] {{background:transparent;}}
+    [data-testid="stSidebar"] {{background:{bosque};}}
+    [data-testid="stSidebar"] * {{color:#E8EFE9;}}
+    [data-testid="stSidebar"] [data-baseweb="select"] *, [data-testid="stSidebar"] input {{color:{carbon};}}
+    [data-testid="stSidebar"] [data-baseweb="tag"] {{background:{ambar};}}
+    [data-testid="stSidebar"] [data-baseweb="tag"] * {{color:{carbon};}}
+    [data-testid="stSidebarNav"] a {{border-radius:8px;}}
+    [data-testid="stSidebarNav"] a[aria-current="page"] {{background:rgba(255,255,255,.12);}}
+    [data-testid="stSidebarNav"] a[aria-current="page"] span {{color:white;font-weight:700;}}
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] > [data-testid="stMarkdown"] .tituloCaja)
+        {{background:white;border:none !important;border-radius:14px;box-shadow:0 1px 3px rgba(31,77,58,.08),
+          0 6px 18px rgba(31,77,58,.06);}}
+    .tituloCaja {{font-weight:700;font-size:1.05rem;color:{carbon};margin-bottom:-6px;}}
+    .subtituloCaja {{font-size:.86rem;color:{grisCalido};font-weight:400;margin-top:2px;}}
+    .portada {{background:linear-gradient(120deg,{bosque} 0%,{bosqueClaro} 100%);color:white;border-radius:16px;
+               padding:26px 30px;margin-bottom:18px;}}
+    .portada .etiqueta {{text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;color:{ambar};font-weight:700;}}
+    .portada h1 {{color:white;font-size:2.1rem;font-weight:800;line-height:1.2;margin:6px 0 6px 0;padding:0;}}
+    .portada p {{color:#D8E6DD;font-size:1rem;margin:0;}}
+    .encabezado {{margin:4px 0 16px 0;}}
+    .encabezado .etiqueta {{text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;color:{bosqueClaro};font-weight:700;}}
+    .encabezado h2 {{color:{carbon};font-size:1.75rem;font-weight:800;margin:2px 0 0 0;padding:0;}}
+    .encabezado p {{color:{grisCalido};margin:2px 0 0 0;font-size:.95rem;}}
+    .cifra {{background:white;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(31,77,58,.08),
+             0 6px 18px rgba(31,77,58,.06);border-top:4px solid var(--acento);min-height:132px;margin-bottom:14px;}}
+    .cifra .nombre {{text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;color:{grisCalido};font-weight:700;}}
+    .cifra .valor {{font-size:1.85rem;font-weight:800;color:{carbon};line-height:1.15;margin-top:6px;}}
+    .cifra .detalle {{font-size:.82rem;color:{grisCalido};margin-top:2px;}}
+    .segmento {{background:white;border-radius:14px;padding:16px 18px;border-left:6px solid var(--acento);
+                box-shadow:0 1px 3px rgba(31,77,58,.08),0 6px 18px rgba(31,77,58,.06);min-height:168px;margin-bottom:14px;}}
+    .segmento .titulo {{font-weight:800;font-size:1.1rem;color:{carbon};}}
+    .segmento .rol {{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--acento);font-weight:700;}}
+    .segmento .datos {{font-size:.92rem;color:#4b5550;margin-top:8px;line-height:1.55;}}
     </style>""", unsafe_allow_html=True)
 
 
 def filtrosLaterales(exploratorio):
-    # Filtros consultables: países, productos, tipo, calidad del dato y años
+    # Filtros: país, producto, tipo y años
     basePerdidas = pr.traducir(exploratorio["basePerdidas"])
-    st.sidebar.markdown("### Filtros consultables")
+    st.sidebar.markdown("#### Filtros")
     st.sidebar.multiselect("País", sorted(basePerdidas["Pais"].unique()), key="fPaises", placeholder="Todos")
     st.sidebar.multiselect("Producto", sorted(basePerdidas["Producto"].unique()), key="fProductos", placeholder="Todos")
     st.sidebar.multiselect("Tipo de producto", ["Perecedero", "Grano"], key="fTipos", placeholder="Todos")
-    st.sidebar.multiselect("Calidad del dato de pérdida", ["Imputado", "Estimado", "Oficial", "Organización externa"],
-                           key="fCalidad", placeholder="Todas")
     st.sidebar.slider("Años", 2010, 2023, (2010, 2023), key="fAnios")
 
 
 def basesFiltradas():
-    # Devuelve la base de pérdidas y la base maestra con los filtros de la barra lateral
+    # Base de pérdidas y base maestra con los filtros de la barra lateral
     exploratorio, _ = cargarResultados()
     basePerdidas = pr.traducir(exploratorio["basePerdidas"])
     baseMaestra = pr.traducir(exploratorio["baseMaestra"])
@@ -67,8 +96,6 @@ def basesFiltradas():
     for base in (basePerdidas, baseMaestra):
         base["Tipo"] = base["Producto"].isin(perecederosEs).map({True: "Perecedero", False: "Grano"})
     basePerdidas["Calidad"] = basePerdidas["Calidad"].map(traduccionCalidad).fillna("Otro")
-    baseMaestra = baseMaestra.merge(basePerdidas[["Pais", "Producto", "Año", "Calidad"]],
-                                    on=["Pais", "Producto", "Año"], how="left")
 
     estado = st.session_state
     anios = estado.get("fAnios", (2010, 2023))
@@ -78,93 +105,74 @@ def basesFiltradas():
         if estado.get("fPaises"): filtro &= df["Pais"].isin(estado["fPaises"])
         if estado.get("fProductos"): filtro &= df["Producto"].isin(estado["fProductos"])
         if estado.get("fTipos"): filtro &= df["Tipo"].isin(estado["fTipos"])
-        if estado.get("fCalidad"): filtro &= df["Calidad"].isin(estado["fCalidad"])
         return df[filtro]
 
     return aplicar(basePerdidas), aplicar(baseMaestra)
 
 
-def resumenFiltros():
-    # Texto corto con los filtros activos
+def textoFiltros():
+    # Filtros activos en una línea
     estado = st.session_state
-    partes = [f"{estado.get('fAnios', (2010, 2023))[0]}–{estado.get('fAnios', (2010, 2023))[1]}"]
-    for clave, nombre in [("fPaises", "países"), ("fProductos", "productos"), ("fTipos", "tipos"), ("fCalidad", "calidades")]:
+    anios = estado.get("fAnios", (2010, 2023))
+    partes = [f"{anios[0]}–{anios[1]}"]
+    for clave in ["fPaises", "fProductos", "fTipos"]:
         if estado.get(clave):
-            partes.append(f"{len(estado[clave])} {nombre}")
-    return "Filtros: " + " · ".join(partes)
+            partes.append(", ".join(estado[clave]) if len(estado[clave]) <= 3 else f"{len(estado[clave])} seleccionados")
+    return " · ".join(partes)
+
+
+def encabezado(etiqueta, titulo, detalle=""):
+    # Encabezado de cada sección
+    st.markdown(f"<div class='encabezado'><div class='etiqueta'>{etiqueta}</div><h2>{titulo}</h2>"
+                f"<p>{detalle}</p></div>", unsafe_allow_html=True)
+
+
+def cifras(lista, columnas=4):
+    # Tarjetas de cifras: (nombre, valor, detalle, color de acento)
+    cols = st.columns(columnas)
+    for i, (nombre, valor, detalle, acento) in enumerate(lista):
+        cols[i % columnas].markdown(
+            f"<div class='cifra' style='--acento:{acento}'><div class='nombre'>{nombre}</div>"
+            f"<div class='valor'>{valor}</div><div class='detalle'>{detalle}</div></div>", unsafe_allow_html=True)
+
+
+def caja(titulo, subtitulo=""):
+    # Tarjeta blanca con título para cada gráfica
+    contenedor = st.container(border=True)
+    contenedor.markdown(f"<div class='tituloCaja'>{titulo}<div class='subtituloCaja'>{subtitulo}</div></div>",
+                        unsafe_allow_html=True)
+    return contenedor
 
 
 def numero(valor, decimales=1):
-    # Formato con coma decimal y punto de miles (estilo Colombia)
+    # Formato con coma decimal y punto de miles
     texto = f"{valor:,.{decimales}f}"
     return texto.replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 def pvalor(p):
-    # Muestra el p-valor como en el informe
+    # p-valor como en el informe
     return "< 0,001" if p < 0.001 else numero(p, 3)
 
 
-def tarjetas(lista, columnas=4):
-    # Fila de tarjetas de colores: (valor, etiqueta, color, icono)
-    cols = st.columns(columnas)
-    for i, (valor, etiqueta, color, icono) in enumerate(lista):
-        cols[i % columnas].markdown(
-            f"<div class='tarjeta' style='background:{color}'><div class='icono'>{icono}</div>"
-            f"<div class='valor'>{valor}</div><div class='etiqueta'>{etiqueta}</div></div>",
-            unsafe_allow_html=True)
-
-
-def caja(titulo):
-    # Caja con encabezado de color para cada gráfica
-    contenedor = st.container(border=True)
-    contenedor.markdown(f"<div class='encabezadoCaja'>{titulo}</div>", unsafe_allow_html=True)
-    return contenedor
-
-
-def estiloGrafico(fig, alto=420):
-    # Estilo común de las gráficas: fondo blanco, ejes suaves y coma decimal
+def estiloGrafico(fig, alto=400):
+    # Estilo común de las gráficas
     fig.update_layout(
-        height=alto, template="plotly_white", separators=",.",
-        font=dict(family="Source Sans Pro, sans-serif", size=13, color="#262730"),
-        title_font=dict(size=15, color=verdeOscuro),
+        height=alto, template="plotly_white", separators=",.", paper_bgcolor="white", plot_bgcolor="white",
+        font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color=carbon),
         legend=dict(orientation="h", yanchor="bottom", y=1.0, xanchor="left", x=0, title_text=""),
-        hoverlabel=dict(bgcolor="white", font_size=13),
+        hoverlabel=dict(bgcolor="white", font_size=13, font_family="Plus Jakarta Sans, sans-serif"),
     )
-    # Márgenes por defecto, sin borrar los que la gráfica ya definió
     margenActual = fig.layout.margin
     fig.update_layout(margin={lado: getattr(margenActual, lado) if getattr(margenActual, lado) is not None else valor
-                              for lado, valor in dict(l=10, r=10, t=50, b=10).items()})
-    fig.update_xaxes(showgrid=False, linecolor="#d0d0d0")
-    fig.update_yaxes(gridcolor="#ececec", zeroline=False)
-    return fig
-
-
-def nota(texto):
-    # Recuadro de lectura del resultado (como el markdown de cada celda del notebook)
-    st.markdown(
-        f"<div style='background:#F3EEE2;border-left:4px solid {naranja};padding:10px 14px;"
-        f"border-radius:6px;margin:4px 0 14px 0'>{texto}</div>",
-        unsafe_allow_html=True,
-    )
-
-
-def verTabla(df, titulo="Ver los datos de esta gráfica"):
-    # Tabla desplegable debajo de cada gráfica
-    with st.expander(titulo):
-        st.dataframe(df, width="stretch", hide_index=True)
-
-
-def lineaReferencia(fig, valor, texto, color=gris):
-    # Línea horizontal punteada con su etiqueta
-    fig.add_hline(y=valor, line_dash="dot", line_color=color, line_width=1.5,
-                  annotation_text=texto, annotation_position="top left",
-                  annotation_font_color=color)
+                              for lado, valor in dict(l=10, r=10, t=30, b=10).items()})
+    fig.update_xaxes(showgrid=False, linecolor="#d9d6cc", tickfont=dict(color=grisCalido))
+    fig.update_yaxes(gridcolor="#efece4", zeroline=False, tickfont=dict(color=grisCalido))
     return fig
 
 
 def sinDatos(df):
     # Detiene la página si los filtros dejan la base vacía
     if df.empty:
-        st.warning("No hay datos con los filtros seleccionados. Cambia los filtros de la barra lateral.")
+        st.warning("No hay datos con los filtros seleccionados.")
         st.stop()
