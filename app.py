@@ -9,12 +9,14 @@ from comun import cargarResultados, estilosPagina, filtrosLaterales
 st.set_page_config(page_title="Pérdida de alimentos · América Latina", page_icon="🌽", layout="wide")
 estilosPagina()
 
-# Menú: la historia en cuatro pasos, el explorador y la ficha técnica
+# Menú: la historia del análisis, la predicción, el explorador y la ficha técnica
 paginas = st.navigation([
     st.Page("paginas/panorama.py", title="Panorama", icon="🌎", default=True),
     st.Page("paginas/donde.py", title="¿Dónde se pierde?", icon="📍"),
     st.Page("paginas/porque.py", title="¿Por qué se pierde?", icon="🔎"),
+    st.Page("paginas/intervenir.py", title="¿Dónde intervenir?", icon="🎯"),
     st.Page("paginas/tendencia.py", title="¿Hacia dónde vamos?", icon="📈"),
+    st.Page("paginas/prediccion.py", title="Predicción y simulador", icon="🔮"),
     st.Page("paginas/explorador.py", title="Explorador de datos", icon="🗂️"),
     st.Page("paginas/ficha.py", title="Ficha técnica", icon="📐"),
 ])

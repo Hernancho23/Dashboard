@@ -1,7 +1,8 @@
 # ## PROCESAMIENTO DE LOS DATOS ##
-# Reproduce el notebook "Detección de puntos críticos de pérdida de alimentos v2":
+# Reproduce el notebook "Detección de puntos críticos de pérdida de alimentos v3":
 # carga, unión de las 4 bases, KPIs, base de modelado, PCA, logística, Random Forest,
-# K-means, asociación (Chi² y MCA) y tendencias. Las páginas solo leen estos resultados.
+# K-means, asociación (Chi² y MCA), tendencias y modelo predictivo del nivel de pérdida.
+# Las páginas solo leen estos resultados.
 
 from pathlib import Path
 
@@ -14,8 +15,13 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import StratifiedKFold, cross_val_predict
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.model_selection import StratifiedKFold, cross_val_predict, cross_val_score, GroupKFold
+from sklearn.metrics import (accuracy_score, confusion_matrix, roc_auc_score, roc_curve, f1_score, recall_score,
+                             cohen_kappa_score, precision_score)
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 carpetaDatos = Path(__file__).parent / "datos"
 
@@ -396,9 +402,126 @@ def procesarModelado(exploratorio):
     serieSinSoya = tasaRegional(basePerdidas[basePerdidas["Producto"] != "Soya beans"])
     rTotal = stats.linregress(serieTotal.index, serieTotal.values)
     rSinSoya = stats.linregress(serieSinSoya.index, serieSinSoya.values)
+    # Tendencia por combinación país-producto (regresión lineal de la tasa sobre el año)
+    tendenciaPaisProducto = []
+    for (pais, producto), g in basePerdidas.groupby(["Pais", "Producto"]):
+        if g["TasaPerdida"].round(3).nunique() <= 2:
+            tendenciaPaisProducto.append({"Pais": pais, "Producto": producto, "Tendencia": "Constante",
+                                          "Pendiente": 0, "p-valor": np.nan})
+            continue
+        lr = stats.linregress(g["Año"], g["TasaPerdida"])
+        tendencia = "Sin tendencia" if lr.pvalue >= 0.05 else ("Creciente" if lr.slope > 0 else "Decreciente")
+        tendenciaPaisProducto.append({"Pais": pais, "Producto": producto, "Tendencia": tendencia,
+                                      "Pendiente": lr.slope, "p-valor": lr.pvalue})
+    tendenciaPaisProducto = pd.DataFrame(tendenciaPaisProducto)
+
     r.update(evolucion=evolucion, tendenciaProducto=tendenciaProducto, serieTotal=serieTotal,
+             tendenciaPaisProducto=tendenciaPaisProducto,
              serieSinSoya=serieSinSoya, rTotal=rTotal, rSinSoya=rSinSoya,
              proyeccion2030=rSinSoya.intercept + rSinSoya.slope * 2030, meta2030=serieSinSoya.loc[2015] / 2)
 
     r["baseModelo"] = baseModelo
+    r.update(procesarPrediccion(baseAnual, suaAncho))
     return r
+
+
+# ## Modelo predictivo del nivel de pérdida (sección 5 del notebook) ##
+
+niveles = ["Bajo", "Medio", "Alto", "Crítico"]
+
+
+def procesarPrediccion(baseAnual, suaAncho):
+    llave = ["Pais", "Producto", "Año"]
+    basePrediccion = baseAnual.merge(suaAncho[llave + ["Production"]], on=llave, how="left")
+    basePrediccion["logProduccion"] = np.log10(basePrediccion["Production"] + 1)
+    basePrediccion["logPrecio"] = np.log10(basePrediccion["Precio_USD_ton"])
+    basePrediccion["Nivel"] = pd.cut(basePrediccion["TasaPerdida"].round(1), [-1, 3, 6, 10, 1000],
+                                     right=False, labels=niveles).astype(str)
+
+    # Variables de entrada y partición temporal (2010-2019 / 2020-2023)
+    variablesNumericas = ["logProduccion", "logPrecio", "DependenciaImportadora", "OrientacionExportadora",
+                          "IndiceRendimiento"]
+    xNivel = pd.get_dummies(basePrediccion[["Producto", "Pais"] + variablesNumericas],
+                            columns=["Producto", "Pais"], drop_first=True).astype(float)
+    yNivel = basePrediccion["Nivel"]
+    entrenamiento = basePrediccion["Año"] <= 2019
+    prueba = basePrediccion["Año"] >= 2020
+    escalador = StandardScaler().fit(xNivel[entrenamiento])
+    xEntrenamiento = escalador.transform(xNivel[entrenamiento])
+    xPrueba = escalador.transform(xNivel[prueba])
+    yEntrenamiento, yPrueba = yNivel[entrenamiento], yNivel[prueba]
+
+    # Comparación de los clasificadores vistos en el curso
+    clasificadores = {"Árbol de decisión": DecisionTreeClassifier(max_depth=6, random_state=42),
+                      "Random Forest": RandomForestClassifier(n_estimators=500, random_state=42, n_jobs=-1),
+                      "Naive Bayes": GaussianNB(),
+                      "SVM": SVC(random_state=42),
+                      "Análisis discriminante": LinearDiscriminantAnalysis(),
+                      "Regresión logística": LogisticRegression(max_iter=2000)}
+    validacion5 = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    comparacion = []
+    for nombre, modelo in clasificadores.items():
+        exactitudVC = cross_val_score(modelo, xEntrenamiento, yEntrenamiento, cv=validacion5).mean()
+        modelo.fit(xEntrenamiento, yEntrenamiento)
+        prediccion = modelo.predict(xPrueba)
+        comparacion.append({"Modelo": nombre, "Exactitud VC": exactitudVC,
+                            "Exactitud": accuracy_score(yPrueba, prediccion),
+                            "F1 macro": f1_score(yPrueba, prediccion, average="macro"),
+                            "Kappa": cohen_kappa_score(yPrueba, prediccion),
+                            "Sensibilidad Crítico": recall_score(yPrueba, prediccion, labels=["Crítico"], average="macro")})
+    comparacion = pd.DataFrame(comparacion).sort_values("F1 macro", ascending=False).reset_index(drop=True)
+
+    # Mejor modelo: exactitud, prueba frente a la tasa de no información y métricas por clase
+    nombreMejor = comparacion.loc[0, "Modelo"]
+    modeloFinal = clasificadores[nombreMejor]
+    prediccionFinal = modeloFinal.predict(xPrueba)
+    aciertos = int((prediccionFinal == yPrueba).sum())
+    nPrueba = len(yPrueba)
+    tasaNoInformacion = yPrueba.value_counts(normalize=True).max()
+    icExactitud = stats.binomtest(aciertos, nPrueba).proportion_ci(confidence_level=0.95)
+    pNIR = stats.binomtest(aciertos, nPrueba, tasaNoInformacion, alternative="greater").pvalue
+    porClase = pd.DataFrame({"Precisión": precision_score(yPrueba, prediccionFinal, labels=niveles, average=None),
+                             "Sensibilidad": recall_score(yPrueba, prediccionFinal, labels=niveles, average=None),
+                             "Casos": yPrueba.value_counts().reindex(niveles).values}, index=niveles)
+    matrizConfusion = pd.DataFrame(confusion_matrix(yPrueba, prediccionFinal, labels=niveles), index=niveles, columns=niveles)
+    importancia = pd.Series(getattr(modeloFinal, "feature_importances_", np.zeros(xNivel.shape[1])),
+                            index=xNivel.columns).sort_values(ascending=False)
+
+    # Base de prueba con la predicción y la probabilidad de cada nivel
+    basePrueba = basePrediccion[prueba].copy()
+    basePrueba["Prediccion"] = prediccionFinal
+    basePrueba["Acierto"] = basePrueba["Prediccion"] == basePrueba["Nivel"]
+    if hasattr(modeloFinal, "predict_proba"):
+        probabilidades = pd.DataFrame(modeloFinal.predict_proba(xPrueba), columns=modeloFinal.classes_, index=basePrueba.index)
+        for nivel in niveles:
+            basePrueba[f"Prob {nivel}"] = probabilidades[nivel]
+    basePrueba["CalidadDato"] = basePrueba["Calidad"].map({"Official value": "Oficial", "Estimated value": "Estimado",
+                                                          "Value imputed by a receiving agency": "Imputado"})
+
+    # Sesgos: exactitud por calidad del dato y por producto
+    porCalidad = basePrueba.groupby("CalidadDato")["Acierto"].agg(Registros="size", Exactitud="mean")
+    porProducto = basePrueba.groupby("Producto")["Acierto"].agg(Registros="size", Exactitud="mean").sort_values("Exactitud")
+
+    # Riesgos de validación: combinaciones nuevas y modelo ingenuo
+    xTodo = StandardScaler().fit_transform(xNivel)
+    combinacion = basePrediccion["Pais"] + " - " + basePrediccion["Producto"]
+    prediccionNueva = cross_val_predict(RandomForestClassifier(n_estimators=500, random_state=42, n_jobs=-1), xTodo, yNivel,
+                                        cv=GroupKFold(n_splits=5), groups=combinacion)
+    ultimoNivel = basePrediccion[entrenamiento].sort_values("Año").groupby(["Pais", "Producto"])["Nivel"].last()
+    basePrueba["Ingenuo"] = [ultimoNivel.get((p, q)) for p, q in zip(basePrueba["Pais"], basePrueba["Producto"])]
+    conHistoria = basePrueba["Ingenuo"].notna()
+    validaciones = pd.DataFrame([
+        ["Validación cruzada al azar (2010-2019)", comparacion.loc[0, "Exactitud VC"]],
+        ["Prueba temporal (2020-2023)", aciertos / nPrueba],
+        ["Combinaciones nuevas", accuracy_score(yNivel, prediccionNueva)],
+        ["Modelo ingenuo (repetir el último nivel)",
+         accuracy_score(basePrueba.loc[conHistoria, "Nivel"], basePrueba.loc[conHistoria, "Ingenuo"])],
+    ], columns=["Evaluación", "Exactitud"])
+
+    return dict(comparacion=comparacion, nombreMejor=nombreMejor, exactitudPrueba=aciertos / nPrueba,
+                icExactitud=(icExactitud.low, icExactitud.high), tasaNoInformacion=tasaNoInformacion, pNIR=pNIR,
+                kappaPrueba=cohen_kappa_score(yPrueba, prediccionFinal), porClase=porClase,
+                matrizConfusion=matrizConfusion, importanciaNivel=importancia, basePrueba=basePrueba,
+                porCalidad=porCalidad, porProductoPrediccion=porProducto, validaciones=validaciones,
+                nEntrenamiento=int(entrenamiento.sum()), nPrueba=nPrueba,
+                distribucionNiveles=yNivel.value_counts().reindex(niveles))
